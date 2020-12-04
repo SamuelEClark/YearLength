@@ -8,8 +8,8 @@ import xlsxwriter
 
 #take date in YYYY-MM-DD format and time in hh:mm:ss and convert into timestamp of int-minutes since 0001-01-01
 def compress_datetime(date, time):
-    date_num = datestr2num(data[0][3])
-    timearr = data[0][4].split(":")
+    date_num = datestr2num(date)
+    timearr = time.split(":")
     time_num = (int(timearr[0])*60)+int(timearr[1])
     stamp = int((date_num*1440)+time_num)
     return stamp
@@ -22,7 +22,10 @@ with open("{}.csv".format(file_path), encoding="utf-8") as f:
     data = [line.split("\t") for line in file[1:]]
     
     #don't need all data from the file (just id/timestamp/username/replies/retweets/likes)
-    con_data = [[item[0], compress_datetime(item[3], item[4]), item[7], int(item[15]), int(item[16]), int(item[17])] for item in data]
+    con_data=[]
+    for item in data:
+        timestamp = compress_datetime(item[3], item[4])
+        con_data.append([item[0], timestamp, item[7], int(item[15]), int(item[16]), int(item[17])])
 
 #finally, write extracted data neatly into an Excel (.xlsx) file
 workbook = xlsxwriter.Workbook("{}_data.xlsx".format(file_path))
