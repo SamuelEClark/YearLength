@@ -4,10 +4,6 @@ import re
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from scipy.signal import butter, lfilter
-from scipy.signal import freqs
-import numpy as np
-
 from helpers.filters import butterworth_lowpass
 from helpers.text_processing import clean_tweet
 
