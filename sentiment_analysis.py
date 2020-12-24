@@ -8,27 +8,26 @@ from scipy.signal import butter, lfilter
 from scipy.signal import freqs
 import numpy as np
 
-def butterworth_lowpass(data, cutoff, fs=1, order=4):
-    b, a = butter(order, cutoff, btype='low', analog = False, fs=fs)
-    y = lfilter(b, a, data)
-    return y
+from helpers.filters import butterworth_lowpass
+from helpers.text_processing import clean_tweet
 
-df = pd.read_csv("bbcbreaking.csv", delimiter="\t")
+# read data
+df = pd.read_csv("bbcbreaking.csv", delimiter="\t", parse_dates=True)
 
-def clean_tweet(tweet_string):
-    cleaned_whitespace = re.sub(r'\s', " ", tweet_string)
-    removed_special_characters = re.sub('[^\w\s]', '', cleaned_whitespace)
-    return removed_special_characters
-
+# acquire tweet sentiment
 sentiments = []
 for each_tweet in df["tweet"]:
     sentiments.append(TextBlob(each_tweet).sentiment[0])
+df["sentiments"] = sentiments
 
-# sns.histplot(sentiments, bins=15)
-# plt.show()
+# format date column and resample at daily rate (this also makes the timeseries equally spaced, which helps).
+# .sum() aggregation, may want to consider averaging the sentiments (median) or similar later.
+df["date"] = pd.to_datetime(df["date"], infer_datetime_format=True)
+df = df[["date","likes_count", "sentiments", "retweets_count", "replies_count"]].resample('1D', on="date").sum()
+print(df.head())
 
-sns.lineplot(x=df.time.loc[0:1000], y=sentiments[0:1001])
-plt.show()
-
-sns.lineplot(x=df.time.loc[0:1000], y=butterworth_lowpass(sentiments[0:1001], cutoff=4))
+# drop a fat one
+plot = sns.lineplot(x=df.index, y=df.sentiments)
+sns.lineplot(x=df.index, y=butterworth_lowpass(df.sentiments, cutoff=0.05))
+plot.axhline(0, linestyle='dashed', color='0000', alpha=0.4)
 plt.show()
